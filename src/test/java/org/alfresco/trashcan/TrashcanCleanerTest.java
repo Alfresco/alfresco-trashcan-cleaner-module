@@ -24,26 +24,30 @@
  */
 package org.alfresco.trashcan;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.transaction.UserTransaction;
 
-import junit.framework.TestCase;
-
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.lock.JobLockService;
 import org.alfresco.repo.model.Repository;
 import org.alfresco.repo.security.authentication.AuthenticationComponent;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.ApplicationContextHelper;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 
 /**
@@ -53,153 +57,142 @@ import org.springframework.context.ApplicationContext;
  * @author Rui Fernandes
  * 
  */
-public class TrashcanCleanerTest extends TestCase
+public class TrashcanCleanerTest
 {
+    private static final int BATCH_SIZE = 1000;
 
-	private static final int BATCH_SIZE = 1000;
+    private static final Log logger = LogFactory.getLog(TrashcanCleanerTest.class);
 
-	// private static Log logger = LogFactory.getLog(TrashcanCleanerTest.class);
+    private static ApplicationContext applicationContext = ApplicationContextHelper.getApplicationContext();
 
-	private static ApplicationContext applicationContext = ApplicationContextHelper
-	        .getApplicationContext();
-	protected NodeService nodeService;
-	protected TransactionService transactionService;
-	protected Repository repository;
-	protected AuthenticationComponent authenticationComponent;
+    protected NodeService nodeService;
+    protected TransactionService transactionService;
+    protected Repository repository;
+    protected JobLockService jobLockService;
+    protected AuthenticationComponent authenticationComponent;
 
-	/**
-	 * 
-	 * Sets services and current user as system.
-	 * 
-	 */
-	@Override
-	public void setUp()
-	{
-		nodeService = (NodeService) applicationContext.getBean("nodeService");
-		authenticationComponent = (AuthenticationComponent) applicationContext
-		        .getBean("authenticationComponent");
-		transactionService = (TransactionService) applicationContext
-		        .getBean("transactionComponent");
-		repository = (Repository) applicationContext
-		        .getBean("repositoryHelper");
+    /**
+     * 
+     * Sets services and current user as system.
+     * 
+     */
+    @Before
+    public void setUp()
+    {
+        nodeService = (NodeService) applicationContext.getBean("nodeService");
+        authenticationComponent = (AuthenticationComponent) applicationContext.getBean("authenticationComponent");
+        transactionService = (TransactionService) applicationContext.getBean("transactionComponent");
+        jobLockService = (JobLockService) applicationContext.getBean("jobLockService");
+        repository = (Repository) applicationContext.getBean("repositoryHelper");
 
-		// Authenticate as the system user
-		authenticationComponent.setSystemUserAsCurrentUser();
-	}
+        // Authenticate as the system user
+        authenticationComponent.setSystemUserAsCurrentUser();
+    }
 
-	/**
-	 * 
-	 * Clears security context.
-	 * 
-	 */
-	@Override
-	public void tearDown()
-	{
-		authenticationComponent.clearCurrentSecurityContext();
-	}
+    /**
+     * 
+     * Clears security context.
+     * 
+     */
+    @After
+    public void tearDown()
+    {
+        authenticationComponent.clearCurrentSecurityContext();
+    }
 
-	/**
-	 * 
-	 * Tests that existing just one node deleted the cleaning of the trashcan
-	 * will delete it using the default configuration.
-	 * 
-	 * @throws Throwable
-	 */
-	public void testCleanSimple() throws Throwable
-	{
-		cleanBatchTest(1, 0);
-	}
+    /**
+     * 
+     * Generic method that asserts that for the <b>nodesCreate</b> existing on
+     * archive store the execution of trashcan clean will leave remaining
+     * undeleted <b>nodesRemain</b>.
+     * 
+     * @param nodesCreate
+     * @param nodesRemain
+     * @throws Throwable
+     */
+    private void cleanBatchTest(int nodesCreate, int nodesRemain) throws Exception
+    {
+        UserTransaction userTransaction1 = transactionService.getUserTransaction();
+        try {
+            userTransaction1.begin();
+            TrashcanCleaner cleaner = new TrashcanCleaner(nodeService, transactionService,
+                    BATCH_SIZE, "PT1S"); // 1s
+            createAndDeleteNodes(nodesCreate);
 
-	/**
-	 * 
-	 * Tests that existing the maximum number of nodes to be deleted in a single
-	 * trashcan clean execution plus one, after the deletion just a single node
-	 * is present in archive.
-	 * 
-	 * @throws Throwable
-	 */
-	public void testCleanBatch() throws Throwable
-	{
-		cleanBatchTest(BATCH_SIZE + 1, 1);
-	}
+            Thread.sleep(1000);
 
-	/**
-	 * 
-	 * Generic method that asserts that for the <b>nodesCreate</b> existing on
-	 * archive store the execution of trashcan clean will leave remaining
-	 * undeleted <b>nodesRemain</b>.
-	 * 
-	 * @param nodesCreate
-	 * @param nodesRemain
-	 * @throws Throwable
-	 */
-	private void cleanBatchTest(int nodesCreate, int nodesRemain)
-	        throws Throwable
-	{
-		UserTransaction userTransaction1 = transactionService
-		        .getUserTransaction();
-		try
-		{
-			userTransaction1.begin();
-			TrashcanCleaner cleaner = new TrashcanCleaner(nodeService,
-			        BATCH_SIZE, -1);
-			createAndDeleteNodes(nodesCreate);
-			long nodesToDelete = cleaner.getNumberOfNodesInTrashcan();
-			System.out.println(String.format("Existing nodes to delete: %s",
-			        nodesToDelete));
-			cleaner.clean();
-			nodesToDelete = cleaner.getNumberOfNodesInTrashcan();
-			System.out.println(String.format(
-			        "Existing nodes to delete after: %s", nodesToDelete));
-			assertEquals(nodesRemain,nodesToDelete);
-			System.out.println("Clean trashcan...");
-			cleaner.clean();
-			userTransaction1.commit();
-		} catch (Throwable e)
-		{
-			try
-			{
-				userTransaction1.rollback();
-			} catch (IllegalStateException ee)
-			{
-			}
-			throw e;
-		}
-	}
+            long nodesToDelete = cleaner.getNumberOfNodesInTrashcan();
+            logger.info(String.format("Existing nodes to delete: %s", nodesToDelete));
+            cleaner.clean();
+            nodesToDelete = cleaner.getNumberOfNodesInTrashcan();
+            logger.info(String.format("Existing nodes to delete after: %s", nodesToDelete));
+            assertEquals(nodesRemain, nodesToDelete);
+            logger.info("Clean trashcan...");
+            cleaner.clean();
+            userTransaction1.commit();
+        }
+        catch (Exception e)
+        {
+            userTransaction1.rollback();
+            throw e;
+        }
+    }
 
-	/**
-	 * 
-	 * Creates and deletes the specified number of nodes.
-	 * 
-	 * @param n
-	 */
-	private void createAndDeleteNodes(int n)
-	{
-		for (int i = n; i > 0; i--)
-		{
-			createAndDeleteNode();
-		}
+    /**
+     * 
+     * Creates and deletes the specified number of nodes.
+     * 
+     * @param n
+     */
+    private void createAndDeleteNodes(int n)
+    {
+        for (int i = n; i > 0; i--)
+        {
+            createAndDeleteNode();
+        }
+    }
 
-	}
+    /**
+     * 
+     * Creates and delete a single node whose name is based on the current time
+     * in milliseconds.
+     * 
+     */
+    private void createAndDeleteNode()
+    {
+        NodeRef companyHome = repository.getCompanyHome();
+        String name = "Sample (" + System.currentTimeMillis() + ")";
+        Map<QName, Serializable> contentProps = new HashMap<QName, Serializable>();
+        contentProps.put(ContentModel.PROP_NAME, name);
+        ChildAssociationRef association = nodeService.createNode(companyHome, ContentModel.ASSOC_CONTAINS,
+                QName.createQName(NamespaceService.CONTENT_MODEL_PREFIX, name), ContentModel.TYPE_CONTENT,
+                contentProps);
+        nodeService.deleteNode(association.getChildRef());
+    }
 
-	/**
-	 * 
-	 * Creates and delete a single node whose name is based on the current time
-	 * in milliseconds.
-	 * 
-	 */
-	private void createAndDeleteNode()
-	{
-		NodeRef companyHome = repository.getCompanyHome();
-		String name = "Sample (" + System.currentTimeMillis() + ")";
-		Map<QName, Serializable> contentProps = new HashMap<QName, Serializable>();
-		contentProps.put(ContentModel.PROP_NAME, name);
-		ChildAssociationRef association = nodeService.createNode(companyHome,
-		        ContentModel.ASSOC_CONTAINS,
-		        QName.createQName(NamespaceService.CONTENT_MODEL_PREFIX, name),
-		        ContentModel.TYPE_CONTENT, contentProps);
-		nodeService.deleteNode(association.getChildRef());
+    /**
+     * 
+     * Tests that after creating just one node and deleting it, the cleaning of the trashcan
+     * will delete it using the default configuration.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testCleanSimple() throws Exception
+    {
+        cleanBatchTest(1, 0);
+    }
 
-	}
-
+    /**
+     * 
+     * Tests that after creating 1 more node than the trashcan cleaner batch size, the cleaning of the trashcan
+     * will leave just a single node in archive.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testCleanBatch() throws Exception
+    {
+        cleanBatchTest(BATCH_SIZE + 1, 1);
+    }
 }

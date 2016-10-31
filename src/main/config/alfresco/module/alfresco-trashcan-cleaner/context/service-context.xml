@@ -18,32 +18,30 @@
 	
 -->
 <beans>
-    
-    <!-- A simple class that is initialized by Spring -->
-<bean id="trashcanCleaner" class="org.alfresco.util.CronTriggerBean">
+
+    <bean id="trashcanCleaner" class="org.alfresco.trashcan.TrashcanCleaner">
+        <constructor-arg ref="nodeService" />
+        <constructor-arg ref="transactionService" />
+        <constructor-arg value="${trashcan.deleteBatchCount}" />
+        <constructor-arg value="${trashcan.daysToKeep}" />
+    </bean>
+
+    <bean id="trashcanCleanerJob" class="org.alfresco.util.CronTriggerBean">
         <property name="jobDetail">
-            <bean id="tempFileCleanerJobDetail" class="org.springframework.scheduling.quartz.JobDetailBean">
+            <bean id="trashcanCleanerJobDetail" class="org.springframework.scheduling.quartz.JobDetailBean">
                 <property name="jobClass">
                     <value>org.alfresco.trashcan.TrashcanCleanerJob</value>
                 </property>
                 <property name="jobDataAsMap">
-			<map>
-				<entry key="nodeService" value-ref="nodeService" />
-				<entry key="transactionService" value-ref="transactionService" />
-				<entry key="authenticationComponent" value-ref="authenticationComponent" />
-				<entry key="jobLockService" value-ref="jobLockService" />
-				<entry key="trashcan.daysToKeep" value="${trashcan.daysToKeep}" />
-				<entry key="trashcan.deleteBatchCount" value="${trashcan.deleteBatchCount}" />
-			</map>
-		</property>
+		            <map>
+		                <entry key="trashcanCleaner" value-ref="trashcanCleaner" />
+                        <entry key="jobLockService" value-ref="jobLockService" />
+		            </map>
+		        </property>
             </bean>
         </property>
-        <property name="scheduler">
-            <ref bean="schedulerFactory" />
-        </property>
-        <property name="cronExpression">
-		<value>${trashcan.cron}</value>
-        </property>
+        <property name="scheduler" ref="schedulerFactory" />
+        <property name="cronExpression" value="${trashcan.cron}" />
     </bean>
     
 </beans>
