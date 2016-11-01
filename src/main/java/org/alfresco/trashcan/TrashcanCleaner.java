@@ -31,10 +31,8 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.alfresco.model.ContentModel;
-import org.alfresco.repo.lock.JobLockService.JobLockRefreshCallback;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
@@ -50,35 +48,28 @@ import org.apache.commons.logging.LogFactory;
  * 
  * This class is capable of cleaning the trashcan without depending on searches
  * over the archive store. So the corresponding index core could be deactivated
- * with no impact on its execution. It will clean (<b>clean</b> method the
- * trashcan according to defined <b>deleteBatchCount</b> and <b>daysToKeep</b>.
- * 
- * <b>deleteBatchCount</b>: It will set how many nodes in trashcan to delete at
- * maximum during <b>clean</b> execution. By default the value is 1000.
- * <b>daysToKeep</b>: The number of days to keep a document in trashcan since
- * its deletion. Any node archived less than the value specified won't be
- * deleted during <b>clean</b> execution. If the value is 0 or negative any
- * archived will be eligible for deletion (default behavior if no positive value
- * is explicitly set).
- * 
- * By default the cleaning will be executed against the standard store for
- * trashcan: archive://SpacesStore. If you want you can also specify a different
- * <b>archiveStoreUrl</b> than the default.
+ * with no impact on its execution. It will {@link #clean} the trashcan according
+ * to defined {@link deleteBatchCount} and {@link keepPeriod} properties.
+ * <p>
+ * {@link deleteBatchCount}: It will set how many nodes in trashcan to delete at
+ * maximum during {@link clean} execution. By default the value is 1000.
+ * <p>
+ * {@link keepPeriod}: The time period (in {@link java.time.Duration} format) for which documents in
+ * trashcan are kept. Any nodes archived less than the value specified won't be deleted during {@link #clean} execution.
  * 
  * @author Rui Fernandes
  * @author sglover
- * 
- * TODO: fetch child associations using the deleteBatchCount rather than all associations?
- * 
  */
-public class TrashcanCleaner implements JobLockRefreshCallback
+public class TrashcanCleaner
 {
+    /*
+     *  TODO: fetch child associations using the deleteBatchCount rather than all associations?
+     */
+
     private static final Log logger = LogFactory.getLog(TrashcanCleaner.class);
 
     private final NodeService nodeService;
     private final TransactionService transactionService;
-
-    private final AtomicBoolean isActive = new AtomicBoolean(true);
 
     private final String archiveStoreUrl = "archive://SpacesStore";
     private final int deleteBatchCount;
@@ -281,16 +272,5 @@ public class TrashcanCleaner implements JobLockRefreshCallback
         {
             logger.debug("TrashcanCleaner finished");
         }
-    }
-
-    @Override
-    public boolean isActive()
-    {
-        return isActive.get();
-    }
-
-    @Override
-    public void lockReleased()
-    {
     }
 }
