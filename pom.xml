@@ -28,9 +28,6 @@
         <db.master.url>jdbc:postgresql:template1</db.master.url>
         <db.master.username>alfresco</db.master.username>
         <db.master.password>alfresco</db.master.password>
-
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
     <!-- Here we realize the connection with the Alfresco selected platform 
