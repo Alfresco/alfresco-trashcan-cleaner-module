@@ -2,12 +2,17 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.alfresco</groupId>
     <artifactId>alfresco-trashcan-cleaner</artifactId>
     <version>2.1-SNAPSHOT</version>
     <name>alfresco-trashcan-cleaner project</name>
     <packaging>jar</packaging>
     <description>The Alfresco Trash Can Cleaner (Alfresco Module)</description>
+
+    <parent>
+        <groupId>org.alfresco</groupId>
+        <artifactId>alfresco-super-pom</artifactId>
+        <version>7</version>
+    </parent>
 
     <properties>
         <!-- Defines the alfresco edition to compile against. Allowed values are [org.alfresco|org.alfresco.enterprise]--> 
@@ -15,8 +20,14 @@
         <!-- Defines the alfresco version to compile against -->
         <alfresco.version>5.2.1-SNAPSHOT</alfresco.version>
 
-        <dependency.mysqlconnector.version>5.1.26</dependency.mysqlconnector.version>
-        <dependency.postgresqlconnector.version>9.1-901-1.jdbc4</dependency.postgresqlconnector.version>
+        <db.drop.command>drop database if exists ${db.name}</db.drop.command>
+        <db.create.command>create database ${db.name}</db.create.command>
+        <db.driver>org.postgresql.Driver</db.driver>
+        <db.name>alfresco</db.name>
+        <db.url>jdbc:postgresql:${db.name}</db.url>
+        <db.master.url>jdbc:postgresql:template1</db.master.url>
+        <db.master.username>alfresco</db.master.username>
+        <db.master.password>alfresco</db.master.password>
 
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -68,14 +79,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>postgresql</groupId>
+            <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>${dependency.postgresqlconnector.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -87,5 +92,100 @@
                 <directory>src/main/config</directory>
             </resource>
         </resources>
+
+        <pluginManagement>
+        	<plugins>
+        		<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+        		<plugin>
+        			<groupId>org.eclipse.m2e</groupId>
+        			<artifactId>lifecycle-mapping</artifactId>
+        			<version>1.0.0</version>
+        			<configuration>
+        				<lifecycleMappingMetadata>
+        					<pluginExecutions>
+        						<pluginExecution>
+        							<pluginExecutionFilter>
+        								<groupId>
+        									org.codehaus.mojo
+        								</groupId>
+        								<artifactId>
+        									sql-maven-plugin
+        								</artifactId>
+        								<versionRange>
+        									[1.5,)
+        								</versionRange>
+        								<goals>
+        									<goal>execute</goal>
+        								</goals>
+        							</pluginExecutionFilter>
+        							<action>
+        								<ignore></ignore>
+        							</action>
+        						</pluginExecution>
+        					</pluginExecutions>
+        				</lifecycleMappingMetadata>
+        			</configuration>
+        		</plugin>
+        	</plugins>
+        </pluginManagement>
     </build>
+    
+    <profiles>
+        <profile>
+            <!-- Wipe the database before starting tests -->
+            <id>wipe-db</id>
+            <activation>
+                <property>
+                    <name>wipeDB</name>
+                </property>
+            </activation>
+	        <build>
+	            <plugins>
+		            <plugin>
+		               <groupId>org.codehaus.mojo</groupId>
+		               <artifactId>sql-maven-plugin</artifactId>
+		               <dependencies>
+			                <dependency>
+			                    <groupId>org.postgresql</groupId>
+			                    <artifactId>postgresql</artifactId>
+			                    <version>${dependency.postgresql.version}</version>
+			                </dependency>
+                        </dependencies>
+		                <configuration>
+		                    <skip>${db.skip}</skip>
+		                    <autocommit>true</autocommit>
+		                    <driver>${db.driver}</driver>
+		                    <url>${db.master.url}</url>
+		                    <username>${db.master.username}</username>
+		                    <password>${db.master.password}</password>
+		                </configuration>
+		               <executions>
+		                   <execution>
+		                       <id>drop-db</id>
+		                       <phase>initialize</phase>
+		                       <goals>
+		                           <goal>execute</goal>
+		                       </goals>
+		                       <configuration>
+		                           <skip>false</skip><!-- always run -->
+		                           <sqlCommand>${db.drop.command}</sqlCommand>
+		                       </configuration>
+		                   </execution>
+		                   <execution>
+		                       <id>create-db</id>
+		                       <phase>initialize</phase>
+		                       <goals>
+		                           <goal>execute</goal>
+		                       </goals>
+		                       <configuration>
+		                           <skip>false</skip><!-- always run -->
+		                           <sqlCommand>${db.create.command}</sqlCommand>
+		                       </configuration>
+		                   </execution>
+		               </executions>
+		           </plugin>
+	            </plugins>
+	        </build>
+        </profile>
+    </profiles>
 </project>
