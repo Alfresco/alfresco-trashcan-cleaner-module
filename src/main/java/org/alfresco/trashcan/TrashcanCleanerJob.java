@@ -50,27 +50,6 @@ import org.quartz.JobExecutionException;
  */
 public class TrashcanCleanerJob extends AbstractScheduledLockedJob
 {
-    private TrashcanCleaner trashcanCleaner;
-
-    public void setTrashcanCleaner(TrashcanCleaner trashcanCleaner)
-    {
-        this.trashcanCleaner = trashcanCleaner;
-    }
-
-    /**
-     * 
-     * Extracts the necessary services and configuration for trashcan cleaning.
-     * Since its an extension of {@link org.alfresco.schedule.AbstractScheduledLockedJob AbstractScheduledLockedJob} it should also receive reference to the
-     * service {@link org.alfresco.repo.lock.JobLockService jobLockService}.
-     * 
-     * @param jobContext
-     */
-    private void setUp(JobExecutionContext jobContext)
-    {
-        trashcanCleaner = (TrashcanCleaner) jobContext.getJobDetail().getJobDataMap()
-                .get("trashcanCleaner");
-    }
-
     /**
      * The implementation of the
      * {@link org.alfresco.schedule.AbstractScheduledLockedJob
@@ -79,9 +58,7 @@ public class TrashcanCleanerJob extends AbstractScheduledLockedJob
     @Override
     public void executeJob(JobExecutionContext jobContext) throws JobExecutionException 
     {
-        setUp(jobContext);
-
+        TrashcanCleaner trashcanCleaner = (TrashcanCleaner) jobContext.getJobDetail().getJobDataMap().get("trashcanCleaner");
         trashcanCleaner.clean();
     }
-
 }
