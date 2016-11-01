@@ -7,29 +7,13 @@
     <version>2.1-SNAPSHOT</version>
     <name>alfresco-trashcan-cleaner project</name>
     <packaging>jar</packaging>
-    <description>Manages the lifecycle of the alfresco-trashcan-cleaner (Alfresco Module)</description>
+    <description>The Alfresco Trash Can Cleaner (Alfresco Module)</description>
 
-<!-- 
-    <parent>
-        <groupId>org.alfresco.maven</groupId>
-        <artifactId>alfresco-sdk-parent</artifactId>
-        <version>2.2.0</version>
-    </parent>
- -->
-    <!-- 
-       | SDK properties have sensible defaults in the SDK parent,
-       | but you can override the properties below to use another version. 
-       | For more available properties see the alfresco-sdk-parent POM. 
-       -->
     <properties>
         <!-- Defines the alfresco edition to compile against. Allowed values are [org.alfresco|org.alfresco.enterprise]--> 
         <alfresco.groupId>org.alfresco</alfresco.groupId>
         <!-- Defines the alfresco version to compile against -->
         <alfresco.version>5.2.1-SNAPSHOT</alfresco.version>
-        <app.log.root.level>WARN</app.log.root.level>
-        <alfresco.data.location>alf_data_dev</alfresco.data.location>
-        <!-- This controls which properties will be picked in src/test/properties for embedded run -->
-        <env>local</env>
 
         <dependency.mysqlconnector.version>5.1.26</dependency.mysqlconnector.version>
         <dependency.postgresqlconnector.version>9.1-901-1.jdbc4</dependency.postgresqlconnector.version>
