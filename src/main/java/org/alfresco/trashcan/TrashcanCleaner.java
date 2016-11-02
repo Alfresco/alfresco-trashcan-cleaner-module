@@ -121,7 +121,7 @@ public class TrashcanCleaner
     private List<NodeRef> getBatchToDelete()
     {
         List<ChildAssociationRef> childAssocs = getTrashcanChildAssocs();
-        List<NodeRef> nodes = new ArrayList<NodeRef>(deleteBatchCount);
+        List<NodeRef> nodes = new ArrayList<>(deleteBatchCount);
         if (logger.isDebugEnabled())
         {
             logger.debug(String.format("Found %s nodes on trashcan", childAssocs.size()));
@@ -179,7 +179,7 @@ public class TrashcanCleaner
      */
     private List<ChildAssociationRef> filterArchiveUsers(List<ChildAssociationRef> allChilds)
     {
-        List<ChildAssociationRef> children = new ArrayList<ChildAssociationRef>();
+        List<ChildAssociationRef> children = new ArrayList<>();
         for (ChildAssociationRef childAssoc : allChilds) 
         {
             NodeRef child = childAssoc.getChildRef();
@@ -246,6 +246,7 @@ public class TrashcanCleaner
             {
                 RetryingTransactionCallback<Void> txnWork = new RetryingTransactionCallback<Void>()
                 {
+                    @Override
                     public Void execute() throws Exception
                     {
                         List<NodeRef> nodes = getBatchToDelete();
