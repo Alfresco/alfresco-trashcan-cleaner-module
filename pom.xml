@@ -15,7 +15,8 @@
     </parent>
 
     <properties>
-        <!-- Defines the alfresco edition to compile against. Allowed values are [org.alfresco|org.alfresco.enterprise]--> 
+        <!-- Defines the alfresco edition to compile against. Allowed values 
+            are [org.alfresco|org.alfresco.enterprise] -->
         <alfresco.groupId>org.alfresco</alfresco.groupId>
         <!-- Defines the alfresco version to compile against -->
         <alfresco.version>5.2.1-SNAPSHOT</alfresco.version>
@@ -34,12 +35,12 @@
         (e.g.version and edition) -->
     <dependencyManagement>
         <dependencies>
-        <!-- 
-             This will import the dependencyManagement for all artifacts in the selected Alfresco version/edition
-                (see http://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Importing_Dependencies) 
-                NOTE: You still need to define dependencies in your POM, but you can omit version as it's enforced by this dependencyManagement. NOTE: It defaults 
-                to the latest version this SDK pom has been tested with, but alfresco version can/should be overridden in your project's pom
-                 --> 
+            <!-- This will import the dependencyManagement for all artifacts 
+                in the selected Alfresco version/edition (see http://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Importing_Dependencies) 
+                NOTE: You still need to define dependencies in your POM, but you can omit 
+                version as it's enforced by this dependencyManagement. NOTE: It defaults 
+                to the latest version this SDK pom has been tested with, but alfresco version 
+                can/should be overridden in your project's pom -->
             <dependency>
                 <groupId>${alfresco.groupId}</groupId>
                 <artifactId>alfresco-platform-distribution</artifactId>
@@ -49,10 +50,10 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-    
+
     <!-- Following dependencies are needed for compiling Java code in src/main/java; 
-         <scope>provided</scope> is inherited for each of the following; 
-         for more info, please refer to alfresco-platform-distribution POM -->
+        <scope>provided</scope> is inherited for each of the following; for more 
+        info, please refer to alfresco-platform-distribution POM -->
     <dependencies>
         <dependency>
             <groupId>${alfresco.groupId}</groupId>
@@ -91,39 +92,34 @@
         </resources>
 
         <pluginManagement>
-        	<plugins>
-        		<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-        		<plugin>
-        			<groupId>org.eclipse.m2e</groupId>
-        			<artifactId>lifecycle-mapping</artifactId>
-        			<version>1.0.0</version>
-        			<configuration>
-        				<lifecycleMappingMetadata>
-        					<pluginExecutions>
-        						<pluginExecution>
-        							<pluginExecutionFilter>
-        								<groupId>
-        									org.codehaus.mojo
-        								</groupId>
-        								<artifactId>
-        									sql-maven-plugin
-        								</artifactId>
-        								<versionRange>
-        									[1.5,)
-        								</versionRange>
-        								<goals>
-        									<goal>execute</goal>
-        								</goals>
-        							</pluginExecutionFilter>
-        							<action>
-        								<ignore></ignore>
-        							</action>
-        						</pluginExecution>
-        					</pluginExecutions>
-        				</lifecycleMappingMetadata>
-        			</configuration>
-        		</plugin>
-        	</plugins>
+            <plugins>
+                <!--This plugin's configuration is used to store Eclipse 
+                    m2e settings only. It has no influence on the Maven build itself. -->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.codehaus.mojo</groupId>
+                                        <artifactId>sql-maven-plugin</artifactId>
+                                        <versionRange>[1.5,)</versionRange>
+                                        <goals>
+                                            <goal>execute</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore></ignore>
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+            </plugins>
         </pluginManagement>
     </build>
 
@@ -147,53 +143,53 @@
                     <name>wipeDB</name>
                 </property>
             </activation>
-	        <build>
-	            <plugins>
-		            <plugin>
-		               <groupId>org.codehaus.mojo</groupId>
-		               <artifactId>sql-maven-plugin</artifactId>
-		               <dependencies>
-			                <dependency>
-			                    <groupId>org.postgresql</groupId>
-			                    <artifactId>postgresql</artifactId>
-			                    <version>${dependency.postgresql.version}</version>
-			                </dependency>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>sql-maven-plugin</artifactId>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.postgresql</groupId>
+                                <artifactId>postgresql</artifactId>
+                                <version>${dependency.postgresql.version}</version>
+                            </dependency>
                         </dependencies>
-		                <configuration>
-		                    <skip>${db.skip}</skip>
-		                    <autocommit>true</autocommit>
-		                    <driver>${db.driver}</driver>
-		                    <url>${db.master.url}</url>
-		                    <username>${db.master.username}</username>
-		                    <password>${db.master.password}</password>
-		                </configuration>
-		               <executions>
-		                   <execution>
-		                       <id>drop-db</id>
-		                       <phase>initialize</phase>
-		                       <goals>
-		                           <goal>execute</goal>
-		                       </goals>
-		                       <configuration>
-		                           <skip>false</skip><!-- always run -->
-		                           <sqlCommand>${db.drop.command}</sqlCommand>
-		                       </configuration>
-		                   </execution>
-		                   <execution>
-		                       <id>create-db</id>
-		                       <phase>initialize</phase>
-		                       <goals>
-		                           <goal>execute</goal>
-		                       </goals>
-		                       <configuration>
-		                           <skip>false</skip><!-- always run -->
-		                           <sqlCommand>${db.create.command}</sqlCommand>
-		                       </configuration>
-		                   </execution>
-		               </executions>
-		           </plugin>
-	            </plugins>
-	        </build>
+                        <configuration>
+                            <skip>${db.skip}</skip>
+                            <autocommit>true</autocommit>
+                            <driver>${db.driver}</driver>
+                            <url>${db.master.url}</url>
+                            <username>${db.master.username}</username>
+                            <password>${db.master.password}</password>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>drop-db</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>execute</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>false</skip><!-- always run -->
+                                    <sqlCommand>${db.drop.command}</sqlCommand>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>create-db</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>execute</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>false</skip><!-- always run -->
+                                    <sqlCommand>${db.create.command}</sqlCommand>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 </project>
