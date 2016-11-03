@@ -6,7 +6,7 @@
         <constructor-arg ref="nodeService" />
         <constructor-arg ref="transactionService" />
         <constructor-arg value="${trashcan.deleteBatchCount}" />
-        <constructor-arg value="${trashcan.daysToKeep}" />
+        <constructor-arg value="${trashcan.keepPeriod}" />
     </bean>
 
     <bean id="trashcanCleanerJob" class="org.alfresco.util.CronTriggerBean">

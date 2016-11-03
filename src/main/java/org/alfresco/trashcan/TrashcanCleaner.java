@@ -78,7 +78,6 @@ public class TrashcanCleaner
 
     /**
      * 
-     * 
      * @param nodeService
      * @param transactionService
      * @param deleteBatchCount
