@@ -19,7 +19,7 @@
             are [org.alfresco|org.alfresco.enterprise] -->
         <alfresco.groupId>org.alfresco</alfresco.groupId>
         <!-- Defines the alfresco version to compile against -->
-        <alfresco.version>5.2.1-SNAPSHOT</alfresco.version>
+        <alfresco.version>5.2.b-EA</alfresco.version>
 
         <db.drop.command>drop database if exists ${db.name}</db.drop.command>
         <db.create.command>create database ${db.name}</db.create.command>
