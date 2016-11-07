@@ -14,6 +14,13 @@
         <version>7</version>
     </parent>
 
+    <scm>
+        <connection>scm:git:ttps://gitlab.alfresco.com/platform/alfresco-trashcan-cleaner-module.git</connection>
+        <developerConnection>scm:git:ttps://gitlab.alfresco.com/platform/alfresco-trashcan-cleaner-module.git</developerConnection>
+        <url>https://gitlab.alfresco.com/platform/alfresco-trashcan-cleaner-module</url>
+        <tag>HEAD</tag>
+    </scm>
+
     <properties>
         <!-- Defines the alfresco edition to compile against. Allowed values 
             are [org.alfresco|org.alfresco.enterprise] -->
