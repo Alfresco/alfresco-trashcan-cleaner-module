@@ -5,8 +5,8 @@
     <bean id="trashcanCleaner" class="org.alfresco.trashcan.TrashcanCleaner">
         <constructor-arg ref="nodeService" />
         <constructor-arg ref="transactionService" />
-        <constructor-arg value="${trashcan.deleteBatchCount}" />
-        <constructor-arg value="${trashcan.keepPeriod}" />
+        <constructor-arg value="${trashcan-cleaner.deleteBatchCount}" />
+        <constructor-arg value="${trashcan-cleaner.keepPeriod}" />
     </bean>
 
     <bean id="trashcanCleanerJob" class="org.alfresco.util.CronTriggerBean">
@@ -25,7 +25,7 @@
             </bean>
         </property>
         <property name="scheduler" ref="schedulerFactory" />
-        <property name="cronExpression" value="${trashcan.cron}" />
+        <property name="cronExpression" value="${trashcan-cleaner.cron}" />
     </bean>
 
 </beans>
