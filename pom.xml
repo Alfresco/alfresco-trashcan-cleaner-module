@@ -21,6 +21,10 @@
         <!-- Defines the alfresco version to compile against -->
         <alfresco.version>5.2.b-EA</alfresco.version>
 
+        <alfresco.data.location>alf_data</alfresco.data.location>
+
+        <maven.clean.version>3.0.0</maven.clean.version>
+
         <db.drop.command>drop database if exists ${db.name}</db.drop.command>
         <db.create.command>create database ${db.name}</db.create.command>
         <db.driver>org.postgresql.Driver</db.driver>
@@ -62,7 +66,6 @@
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
-            <version>2.5</version>
             <scope>provided</scope>
         </dependency>
         <!-- Test dependencies -->
@@ -145,6 +148,24 @@
             </activation>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-clean-plugin</artifactId>
+                        <version>${maven.clean.version}</version>
+                        <configuration>
+                            <filesets>
+                                <fileset>
+                                    <directory>${alfresco.data.location}</directory>
+                                </fileset>
+                                <fileset>
+                                    <directory>${project.basedir}</directory>
+                                    <includes>
+                                        <include>**/*.log*</include>
+                                    </includes>
+                                </fileset>
+                            </filesets>
+                        </configuration>
+                    </plugin>
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>sql-maven-plugin</artifactId>
