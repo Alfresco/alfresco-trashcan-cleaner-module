@@ -5,7 +5,7 @@
     <version>2.3-SNAPSHOT</version>
     <name>alfresco-trashcan-cleaner project</name>
     <packaging>jar</packaging>
-    <description>The Alfresco Trash Can Cleaner (Alfresco Module)</description>
+    <description>The Alfresco Trashcan Cleaner (Alfresco Module)</description>
 
     <parent>
         <groupId>org.alfresco</groupId>
@@ -14,9 +14,9 @@
     </parent>
 
     <scm>
-        <connection>scm:git:https://gitlab.alfresco.com/platform/alfresco-trashcan-cleaner-module.git</connection>
-        <developerConnection>scm:git:https://gitlab.alfresco.com/platform/alfresco-trashcan-cleaner-module.git</developerConnection>
-        <url>https://gitlab.alfresco.com/platform/alfresco-trashcan-cleaner-module</url>
+        <connection>scm:git:git@github.com:Alfresco/alfresco-trashcan-cleaner-module.git</connection>
+        <developerConnection>scm:git:git@github.com:Alfresco/alfresco-trashcan-cleaner-module.git</developerConnection>
+        <url>https://github.com/Alfresco/alfresco-trashcan-cleaner-module</url>
         <tag>HEAD</tag>
     </scm>
 
