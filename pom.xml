@@ -21,12 +21,6 @@
     </scm>
 
     <properties>
-        <!-- Defines the alfresco edition to compile against. Allowed values 
-            are [org.alfresco|org.alfresco.enterprise] -->
-        <alfresco.groupId>org.alfresco</alfresco.groupId>
-        <!-- Defines the alfresco version to compile against -->
-        <alfresco.version>5.2.b-EA</alfresco.version>
-
         <alfresco.data.location>alf_data</alfresco.data.location>
 
         <maven.clean.version>3.0.0</maven.clean.version>
@@ -41,53 +35,29 @@
         <db.master.password>alfresco</db.master.password>
     </properties>
 
-    <!-- Here we realize the connection with the Alfresco selected platform 
-        (e.g.version and edition) -->
-    <dependencyManagement>
-        <dependencies>
-            <!-- This will import the dependencyManagement for all artifacts 
-                in the selected Alfresco version/edition (see http://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Importing_Dependencies) 
-                NOTE: You still need to define dependencies in your POM, but you can omit 
-                version as it's enforced by this dependencyManagement. NOTE: It defaults 
-                to the latest version this SDK pom has been tested with, but alfresco version 
-                can/should be overridden in your project's pom -->
-            <dependency>
-                <groupId>${alfresco.groupId}</groupId>
-                <artifactId>alfresco-platform-distribution</artifactId>
-                <version>${alfresco.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
-    <!-- Following dependencies are needed for compiling Java code in src/main/java; 
-        <scope>provided</scope> is inherited for each of the following; for more 
-        info, please refer to alfresco-platform-distribution POM -->
     <dependencies>
         <dependency>
-            <groupId>${alfresco.groupId}</groupId>
+            <groupId>org.alfresco</groupId>
             <artifactId>alfresco-repository</artifactId>
+            <version>spring5-rc2</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.0.1</version>
             <scope>provided</scope>
         </dependency>
         <!-- Test dependencies -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>xml-apis</groupId>
-            <artifactId>xml-apis</artifactId>
+            <version>4.12</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
+            <version>9.4.1212</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
