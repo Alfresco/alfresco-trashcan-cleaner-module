@@ -1,6 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!DOCTYPE beans PUBLIC '-//SPRING//DTD BEAN//EN' 'http://www.springframework.org/dtd/spring-beans.dtd'>
-<beans>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd">
 
     <bean id="trashcanCleaner" class="org.alfresco.trashcan.TrashcanCleaner">
         <constructor-arg ref="nodeService" />
@@ -9,23 +11,28 @@
         <constructor-arg value="${trashcan-cleaner.keepPeriod}" />
     </bean>
 
-    <bean id="trashcanCleanerJob" class="org.alfresco.util.CronTriggerBean">
-        <property name="jobDetail">
-            <bean id="trashcanCleanerJobDetail"
-                class="org.springframework.scheduling.quartz.JobDetailBean">
-                <property name="jobClass">
-                    <value>org.alfresco.trashcan.TrashcanCleanerJob</value>
-                </property>
-                <property name="jobDataAsMap">
-                    <map>
-                        <entry key="trashcanCleaner" value-ref="trashcanCleaner" />
-                        <entry key="jobLockService" value-ref="jobLockService" />
-                    </map>
-                </property>
-            </bean>
+    <bean id="trashcanSchedulerAccessor" class="org.springframework.scheduling.quartz.SchedulerAccessorBean">
+        <property name="scheduler" ref="schedulerFactory"/>
+        <property name="triggers">
+            <list>
+                <ref bean="trashcanCleanerTrigger"/>
+            </list>
         </property>
-        <property name="scheduler" ref="schedulerFactory" />
-        <property name="cronExpression" value="${trashcan-cleaner.cron}" />
+    </bean>
+
+    <bean id="trashcanCleanerTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+        <property name="cronExpression" value="${trashcan-cleaner.cron}"/>
+        <property name="jobDetail" ref="trashcanCleanerJobDetail"/>
+    </bean>
+
+    <bean id="trashcanCleanerJobDetail" class="org.springframework.scheduling.quartz.JobDetailFactoryBean">
+        <property name="jobClass" value="org.alfresco.trashcan.TrashcanCleanerJob"/>
+        <property name="jobDataAsMap">
+            <map>
+                <entry key="trashcanCleaner" value-ref="trashcanCleaner" />
+                <entry key="jobLockService" value-ref="jobLockService" />
+            </map>
+        </property>
     </bean>
 
 </beans>

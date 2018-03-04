@@ -5,7 +5,7 @@
     <version>2.3-SNAPSHOT</version>
     <name>alfresco-trashcan-cleaner project</name>
     <packaging>jar</packaging>
-    <description>The Alfresco Trash Can Cleaner (Alfresco Module)</description>
+    <description>The Alfresco Trashcan Cleaner (Alfresco Module)</description>
 
     <parent>
         <groupId>org.alfresco</groupId>
@@ -14,80 +14,39 @@
     </parent>
 
     <scm>
-        <connection>scm:git:https://gitlab.alfresco.com/platform/alfresco-trashcan-cleaner-module.git</connection>
-        <developerConnection>scm:git:https://gitlab.alfresco.com/platform/alfresco-trashcan-cleaner-module.git</developerConnection>
-        <url>https://gitlab.alfresco.com/platform/alfresco-trashcan-cleaner-module</url>
+        <connection>scm:git:git@github.com:Alfresco/alfresco-trashcan-cleaner-module.git</connection>
+        <developerConnection>scm:git:git@github.com:Alfresco/alfresco-trashcan-cleaner-module.git</developerConnection>
+        <url>https://github.com/Alfresco/alfresco-trashcan-cleaner-module</url>
         <tag>HEAD</tag>
     </scm>
 
     <properties>
-        <!-- Defines the alfresco edition to compile against. Allowed values 
-            are [org.alfresco|org.alfresco.enterprise] -->
-        <alfresco.groupId>org.alfresco</alfresco.groupId>
-        <!-- Defines the alfresco version to compile against -->
-        <alfresco.version>5.2.b-EA</alfresco.version>
-
         <alfresco.data.location>alf_data</alfresco.data.location>
-
-        <maven.clean.version>3.0.0</maven.clean.version>
-
-        <db.drop.command>drop database if exists ${db.name}</db.drop.command>
-        <db.create.command>create database ${db.name}</db.create.command>
-        <db.driver>org.postgresql.Driver</db.driver>
-        <db.name>alfresco</db.name>
-        <db.url>jdbc:postgresql:${db.name}</db.url>
-        <db.master.url>jdbc:postgresql:template1</db.master.url>
-        <db.master.username>alfresco</db.master.username>
-        <db.master.password>alfresco</db.master.password>
     </properties>
 
-    <!-- Here we realize the connection with the Alfresco selected platform 
-        (e.g.version and edition) -->
-    <dependencyManagement>
-        <dependencies>
-            <!-- This will import the dependencyManagement for all artifacts 
-                in the selected Alfresco version/edition (see http://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Importing_Dependencies) 
-                NOTE: You still need to define dependencies in your POM, but you can omit 
-                version as it's enforced by this dependencyManagement. NOTE: It defaults 
-                to the latest version this SDK pom has been tested with, but alfresco version 
-                can/should be overridden in your project's pom -->
-            <dependency>
-                <groupId>${alfresco.groupId}</groupId>
-                <artifactId>alfresco-platform-distribution</artifactId>
-                <version>${alfresco.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
-    <!-- Following dependencies are needed for compiling Java code in src/main/java; 
-        <scope>provided</scope> is inherited for each of the following; for more 
-        info, please refer to alfresco-platform-distribution POM -->
     <dependencies>
         <dependency>
-            <groupId>${alfresco.groupId}</groupId>
+            <groupId>org.alfresco</groupId>
             <artifactId>alfresco-repository</artifactId>
+            <version>6.28</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.0.1</version>
             <scope>provided</scope>
         </dependency>
         <!-- Test dependencies -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>xml-apis</groupId>
-            <artifactId>xml-apis</artifactId>
+            <version>4.12</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
+            <version>9.4.1212</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -142,81 +101,4 @@
             <url>https://artifacts.alfresco.com/nexus/content/repositories/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
-
-    <profiles>
-        <profile>
-            <!-- Wipe the database before starting tests -->
-            <id>wipe-db</id>
-            <activation>
-                <property>
-                    <name>wipeDB</name>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-clean-plugin</artifactId>
-                        <version>${maven.clean.version}</version>
-                        <configuration>
-                            <filesets>
-                                <fileset>
-                                    <directory>${alfresco.data.location}</directory>
-                                </fileset>
-                                <fileset>
-                                    <directory>${project.basedir}</directory>
-                                    <includes>
-                                        <include>**/*.log*</include>
-                                    </includes>
-                                </fileset>
-                            </filesets>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>sql-maven-plugin</artifactId>
-                        <dependencies>
-                            <dependency>
-                                <groupId>org.postgresql</groupId>
-                                <artifactId>postgresql</artifactId>
-                                <version>${dependency.postgresql.version}</version>
-                            </dependency>
-                        </dependencies>
-                        <configuration>
-                            <skip>${db.skip}</skip>
-                            <autocommit>true</autocommit>
-                            <driver>${db.driver}</driver>
-                            <url>${db.master.url}</url>
-                            <username>${db.master.username}</username>
-                            <password>${db.master.password}</password>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>drop-db</id>
-                                <phase>initialize</phase>
-                                <goals>
-                                    <goal>execute</goal>
-                                </goals>
-                                <configuration>
-                                    <skip>false</skip><!-- always run -->
-                                    <sqlCommand>${db.drop.command}</sqlCommand>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>create-db</id>
-                                <phase>initialize</phase>
-                                <goals>
-                                    <goal>execute</goal>
-                                </goals>
-                                <configuration>
-                                    <skip>false</skip><!-- always run -->
-                                    <sqlCommand>${db.create.command}</sqlCommand>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>
