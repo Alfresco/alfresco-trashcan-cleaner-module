@@ -50,3 +50,11 @@ The SNAPSHOT version of the artifact is **never** published.
 
 ### Contributing guide
 Please use [this guide](CONTRIBUTING.md) to make a contribution to the project.
+
+### Thank you
+The following people contributed in the early stages of this module before it was hosted in GitHub:
+
+* Bertrand Magnier of ATOL CD
+* Julien Berthoux of ATOL CD
+* Rui Fernandes
+* Philippe Dubois
