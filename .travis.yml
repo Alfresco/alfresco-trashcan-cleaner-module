@@ -1,0 +1,39 @@
+# Auto-generated .travis.yml file
+# Generated 2020-11-25 10:02:04 from Bamboo build plan PLAT-TRASHCLEAN
+
+language: java
+
+jdk:
+  - oraclejdk8
+
+dist: trusty
+
+services:
+  - docker
+
+addons:
+  artifacts: true
+
+stages:
+  - name: Default Stage
+  - name: Release
+    if: fork = false AND (branch = master OR branch =~ /support\/.*/) AND type != pull_request AND commit_message !~ /\[no-release\]/
+
+jobs:
+  include:
+    - stage: "Default Stage"
+      name: "Default Job"
+      script:
+        # Start PostgreSQL image
+        - docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=alfresco -e POSTGRES_USER=alfresco -e POSTGRES_DB=alfresco postgres:${POSTGRES_VERSION} postgres -c 'max_connections=300'
+        # Build + Install
+        - mvn --batch-mode -U clean org.jacoco:jacoco-maven-plugin:prepare-agent install  -Ddb.driver=org.postgresql.Driver  -Ddb.name=alfresco  -Ddb.url=jdbc:postgresql:alfresco  -Ddb.username=alfresco  -Ddb.password=alfresco
+        # Sonar
+        - mvn --batch-mode sonar:sonar
+      after_script:
+        - artifacts upload target/*.jar
+    - stage: "Release"
+      name: "Release"
+      script:
+        # Build
+        - GIT_AUTHOR_NAME=alfresco-build GIT_AUTHOR_EMAIL=build@alfresco.com GIT_COMMITTER_NAME=alfresco-build GIT_COMMITTER_EMAIL=build@alfresco.com mvn -DreleaseVersion=${RELEASE_VERSION} -DdevelopmentVersion=${DEVELOPMENT_VERSION} -DskipTests  -Darguments=-DskipTests release:prepare release:perform
