@@ -20,3 +20,4 @@ bin
 src/log4j.properties
 alfresco.log
 *.jar
+.idea

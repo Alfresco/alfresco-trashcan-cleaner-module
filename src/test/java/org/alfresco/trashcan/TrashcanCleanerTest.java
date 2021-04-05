@@ -4,28 +4,26 @@
  * %%
  * Copyright (C) 2005 - 2016 Alfresco Software Limited
  * %%
- * This file is part of the Alfresco software. 
- * If the software was purchased under a paid Alfresco license, the terms of 
- * the paid license agreement will prevail.  Otherwise, the software is 
+ * This file is part of the Alfresco software.
+ * If the software was purchased under a paid Alfresco license, the terms of
+ * the paid license agreement will prevail.  Otherwise, the software is
  * provided under the following open source license terms:
- * 
+ *
  * Alfresco is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Alfresco is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
 package org.alfresco.trashcan;
-
-import static org.junit.Assert.assertEquals;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -43,28 +41,25 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
-import org.alfresco.util.ApplicationContextHelper;
+import org.alfresco.util.BaseSpringTest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.context.ApplicationContext;
 
 /**
- * 
+ *
  * Test class for {@link org.alfresco.trashcan.TrashcanCleaner TrashcanCleaner}.
- * 
+ *
  * @author Rui Fernandes
- * 
+ *
  */
-public class TrashcanCleanerTest
+public class TrashcanCleanerTest extends BaseSpringTest
 {
     private static final int BATCH_SIZE = 1000;
 
     private static final Log logger = LogFactory.getLog(TrashcanCleanerTest.class);
-
-    private static ApplicationContext applicationContext = ApplicationContextHelper.getApplicationContext();
 
     protected NodeService nodeService;
     protected TransactionService transactionService;
@@ -73,9 +68,9 @@ public class TrashcanCleanerTest
     protected AuthenticationComponent authenticationComponent;
 
     /**
-     * 
+     *
      * Sets services and current user as system.
-     * 
+     *
      */
     @Before
     public void setUp()
@@ -91,9 +86,9 @@ public class TrashcanCleanerTest
     }
 
     /**
-     * 
+     *
      * Clears security context.
-     * 
+     *
      */
     @After
     public void tearDown()
@@ -102,11 +97,11 @@ public class TrashcanCleanerTest
     }
 
     /**
-     * 
+     *
      * Generic method that asserts that for the <b>nodesCreate</b> existing on
      * archive store the execution of trashcan clean will leave remaining
      * undeleted <b>nodesRemain</b>.
-     * 
+     *
      * @param nodesCreate
      * @param nodesRemain
      * @throws Throwable
@@ -141,9 +136,9 @@ public class TrashcanCleanerTest
     }
 
     /**
-     * 
+     *
      * Creates and deletes the specified number of nodes.
-     * 
+     *
      * @param n
      */
     private void createAndDeleteNodes(int n)
@@ -155,10 +150,10 @@ public class TrashcanCleanerTest
     }
 
     /**
-     * 
+     *
      * Creates and delete a single node whose name is based on the current time
      * in milliseconds.
-     * 
+     *
      */
     private void createAndDeleteNode()
     {
@@ -173,10 +168,10 @@ public class TrashcanCleanerTest
     }
 
     /**
-     * 
+     *
      * Tests that after creating just one node and deleting it, the cleaning of the trashcan
      * will delete it using the default configuration.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -186,10 +181,10 @@ public class TrashcanCleanerTest
     }
 
     /**
-     * 
+     *
      * Tests that after creating 1 more node than the trashcan cleaner batch size, the cleaning of the trashcan
      * will leave just a single node in archive.
-     * 
+     *
      * @throws Exception
      */
     @Test

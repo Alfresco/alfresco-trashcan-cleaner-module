@@ -27,7 +27,6 @@ package org.alfresco.trashcan;
 
 import org.alfresco.schedule.AbstractScheduledLockedJob;
 import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
 
 /**
  * 
@@ -57,7 +56,7 @@ public class TrashcanCleanerJob extends AbstractScheduledLockedJob
      * AbstractScheduledLockedJob} abstract executeJob method.
      */
     @Override
-    public void executeJob(JobExecutionContext jobContext) throws JobExecutionException 
+    public void executeJob(JobExecutionContext jobContext)
     {
         TrashcanCleaner trashcanCleaner = (TrashcanCleaner) jobContext.getJobDetail().getJobDataMap().get("trashcanCleaner");
         trashcanCleaner.clean();
