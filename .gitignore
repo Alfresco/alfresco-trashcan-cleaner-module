@@ -19,6 +19,6 @@ assembly
 bin/**/*
 bin
 src/log4j.properties
-alfresco.log
+alfresco.log*
 *.jar
 .idea
