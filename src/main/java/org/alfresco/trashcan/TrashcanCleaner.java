@@ -27,11 +27,11 @@ package org.alfresco.trashcan;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.ArrayList;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
@@ -40,10 +40,12 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
+import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.service.transaction.TransactionService;
-import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import static org.apache.commons.collections4.ListUtils.partition;
 
 /**
  *
@@ -63,10 +65,6 @@ import org.apache.commons.logging.LogFactory;
  */
 public class TrashcanCleaner
 {
-    /*
-     *  TODO: fetch child associations using the deleteBatchCount rather than all associations?
-     */
-
     private static final Log logger = LogFactory.getLog(TrashcanCleaner.class);
 
     private static final int batchSize = 100;
@@ -97,26 +95,21 @@ public class TrashcanCleaner
 
     /**
      *
-     * It splits and deletes the {@link java.util.List List} of
-     * {@link org.alfresco.service.cmr.repository.NodeRef NodeRef} received as
+     * It splits and deletes the {@link java.util.List} of
+     * {@link org.alfresco.service.cmr.repository.NodeRef}s received as
      * argument in batches of {@link #batchSize}.
      *
      * @param nodes
      */
-    private void deleteInBatches(List<NodeRef> nodes)
+    private void delete(List<NodeRef> nodes)
     {
-        if (deleteBatchCount < batchSize)
+        if (deleteBatchCount <= batchSize)
         {
             deleteNodes(nodes);
             return;
         }
 
-        List<List<NodeRef>> subSets = ListUtils.partition(nodes, batchSize);
-
-        for (int i = subSets.size(); i > 0; i--)
-        {
-            deleteNodes(subSets.get(i - 1));
-        }
+        partition(nodes, batchSize).forEach(this::deleteNodes);
     }
 
     /**
@@ -148,52 +141,25 @@ public class TrashcanCleaner
      * It returns the {@link java.util.List List} of
      * {@link org.alfresco.service.cmr.repository.NodeRef NodeRef} of the
      * archive store set to be deleted according to configuration for
-     * <b>deleteBatchCount</b> and <b>daysToKeep</b>.
+     * <b>deleteBatchCount</b> and <b>keepPeriod</b>.
      *
      * @return
      */
     private List<NodeRef> getBatchToDelete()
     {
-        List<ChildAssociationRef> childAssocs = getTrashcanChildAssocs();
-        List<NodeRef> nodes = new ArrayList<>(deleteBatchCount);
-        if (logger.isDebugEnabled())
-        {
-            logger.debug(String.format("Found %s nodes on trashcan", childAssocs.size()));
-        }
-        return fillBatchToDelete(nodes, childAssocs);
+        return getTrashcanChildAssocs()
+                .stream()
+                .filter(el -> olderThanDaysToKeep(el.getChildRef()))
+                .map(ChildAssociationRef::getChildRef)
+                .collect(Collectors.toList());
     }
 
     /**
      *
-     * It will fill up a {@link java.util.List List} of
-     * {@link org.alfresco.service.cmr.repository.NodeRef NodeRef} from all the
-     * {@link org.alfresco.service.cmr.repository.ChildAssociationRef
-     * ChildAssociationRef} of the archive store set, according to the limit
-     * parameters: <b>deleteBatchCount</b> and <b>daysToKeep</b>.
-     *
-     * @param batch
-     * @param trashChildAssocs
-     * @return
-     */
-    private List<NodeRef> fillBatchToDelete(List<NodeRef> batch, List<ChildAssociationRef> trashChildAssocs)
-    {
-        for (int j = trashChildAssocs.size(); j > 0 && batch.size() < deleteBatchCount; j--)
-        {
-            ChildAssociationRef childAssoc = trashChildAssocs.get(j - 1);
-            NodeRef childRef = childAssoc.getChildRef();
-            if (olderThanDaysToKeep(childRef))
-            {
-                batch.add(childRef);
-            }
-        }
-        return batch;
-    }
-
-    /**
-     *
-     * It will return all
-     * {@link org.alfresco.service.cmr.repository.ChildAssociationRef
-     * ChildAssociationRef} of the archive store set.
+     * It will return the first {@link #deleteBatchCount}
+     * {@link org.alfresco.service.cmr.repository.ChildAssociationRef}s
+     * of type {@link ContentModel}.ASSOC_CHILDREN
+     * from the archive store set.
      *
      * @return
      */
@@ -201,35 +167,15 @@ public class TrashcanCleaner
     {
         StoreRef archiveStore = new StoreRef(archiveStoreUrl);
         NodeRef archiveRoot = nodeService.getRootNode(archiveStore);
-        List<ChildAssociationRef> allChildren = nodeService.getChildAssocs(archiveRoot);
-        return filterArchiveUsers(allChildren);
-    }
 
-    /**
-     *
-     * Don't include on list of nodes to be deleted the archiveuser node types.
-     *
-     * @return
-     */
-    private List<ChildAssociationRef> filterArchiveUsers(List<ChildAssociationRef> allChilds)
-    {
-        List<ChildAssociationRef> children = new ArrayList<>();
-        for (ChildAssociationRef childAssoc : allChilds)
-        {
-            NodeRef child = childAssoc.getChildRef();
-            if (!ContentModel.TYPE_ARCHIVE_USER.equals(nodeService.getType(child)))
-            {
-                children.add(childAssoc);
-            }
-        }
-
-        return children;
+        return nodeService.getChildAssocs(
+                archiveRoot, ContentModel.ASSOC_CHILDREN, RegexQNamePattern.MATCH_ALL, deleteBatchCount, false);
     }
 
     /**
      *
      * It checks if the archived node has been archived since longer than
-     * <b>daysToKeep</b>. If <b>daysToKeep</b> is 0 or negative it will return
+     * <b>keepPeriod</b>. If <b>keepPeriod</b> is 0 or negative it will return
      * always true.
      *
      * @param node
@@ -244,8 +190,8 @@ public class TrashcanCleaner
             archivedDateValue = archivedDate.getTime();
         }
 
-        Instant before = LocalDateTime.now().toInstant(ZoneOffset.UTC).minus(keepPeriod);
-        return Instant.ofEpochMilli(archivedDateValue).isBefore(before);
+        ZonedDateTime before = Instant.ofEpochMilli(System.currentTimeMillis()).minus(keepPeriod).atZone(ZoneId.of("UTC"));
+        return Instant.ofEpochMilli(archivedDateValue).atZone(ZoneId.of("UTC")).isBefore(before);
     }
 
     /**
@@ -256,14 +202,18 @@ public class TrashcanCleaner
      */
     public long getNumberOfNodesInTrashcan()
     {
-        return getTrashcanChildAssocs().size();
+        StoreRef storeRef = new StoreRef(archiveStoreUrl);
+        NodeRef archiveRoot = nodeService.getRootNode(storeRef);
+
+        return nodeService.getChildAssocs(
+                archiveRoot, ContentModel.ASSOC_CHILDREN, RegexQNamePattern.MATCH_ALL).size();
     }
 
     /**
      *
      * The method that will clean the specified <b>archiveStoreUrl</b> to the
      * limits defined by the values set for <b>deleteBatchCount</b> and
-     * <b>daysToKeep</b>.
+     * <b>keepPeriod</b>.
      *
      */
     public void clean()
@@ -277,7 +227,6 @@ public class TrashcanCleaner
         {
             RetryingTransactionCallback<Void> txnWork = () ->
             {
-                // TODO get only batch to delete
                 trashcanNodes = getBatchToDelete();
 
                 if (logger.isDebugEnabled())
@@ -290,7 +239,7 @@ public class TrashcanCleaner
             return transactionService.getRetryingTransactionHelper().doInTransaction(txnWork);
         });
 
-        deleteInBatches(trashcanNodes);
+        delete(trashcanNodes);
 
         if (logger.isDebugEnabled())
         {

@@ -98,15 +98,15 @@ public class TrashcanCleanerTest extends BaseSpringTest
 
     /**
      *
-     * Generic method that asserts that for the <b>nodesCreate</b> existing on
+     * Generic method that asserts that for the <b>archivedNodes</b> existing on
      * archive store the execution of trashcan clean will leave remaining
-     * undeleted <b>nodesRemain</b>.
+     * undeleted <b>remainingNodes</b>.
      *
-     * @param nodesCreate
-     * @param nodesRemain
+     * @param archivedNodes Number of nodes to be created and added to trashcan
+     * @param remainingNodes Number of nodes expected after trashcan cleanup
      * @throws Throwable
      */
-    private void cleanBatchTest(int nodesCreate, int nodesRemain) throws Exception
+    private void cleanBatchTest(int archivedNodes, int remainingNodes) throws Exception
     {
         UserTransaction userTransaction1 = transactionService.getUserTransaction();
         try
@@ -114,18 +114,24 @@ public class TrashcanCleanerTest extends BaseSpringTest
             userTransaction1.begin();
             TrashcanCleaner cleaner = new TrashcanCleaner(nodeService, transactionService,
                     BATCH_SIZE, "PT1S"); // 1s
-            createAndDeleteNodes(nodesCreate);
+            createAndDeleteNodes(archivedNodes);
 
-            Thread.sleep(1000);
+            Thread.sleep(1500);
 
-            long nodesToDelete = cleaner.getNumberOfNodesInTrashcan();
-            logger.info(String.format("Existing nodes to delete: %s", nodesToDelete));
+            long nodesInTrashcan = cleaner.getNumberOfNodesInTrashcan();
+            logger.info(String.format("Existing nodes to delete: %s", nodesInTrashcan));
+            assertEquals(archivedNodes, nodesInTrashcan);
+
             cleaner.clean();
-            nodesToDelete = cleaner.getNumberOfNodesInTrashcan();
-            logger.info(String.format("Existing nodes to delete after: %s", nodesToDelete));
-            assertEquals(nodesRemain, nodesToDelete);
+
+            nodesInTrashcan = cleaner.getNumberOfNodesInTrashcan();
+            logger.info(String.format("Existing nodes to delete after: %s", nodesInTrashcan));
+            assertEquals(remainingNodes, nodesInTrashcan);
+
             logger.info("Clean trashcan...");
             cleaner.clean();
+            assertEquals(0, cleaner.getNumberOfNodesInTrashcan());
+
             userTransaction1.commit();
         }
         catch (Exception e)
@@ -191,5 +197,44 @@ public class TrashcanCleanerTest extends BaseSpringTest
     public void testCleanBatch() throws Exception
     {
         cleanBatchTest(BATCH_SIZE + 1, 1);
+    }
+
+    @Test
+    public void testKeepPeriodInTrashcanCleaner() throws Exception
+    {
+        final int deleteBatchCount = 10;
+        final long noOfRemainingNodes = 8;
+
+        UserTransaction userTransaction = transactionService.getUserTransaction();
+        try {
+            userTransaction.begin();
+            TrashcanCleaner cleaner = new TrashcanCleaner(nodeService, transactionService,
+                    deleteBatchCount, "PT10S"); // 10s
+
+            // archived nodes older than 'keepPeriod' - will be deleted by the trashcan cleaner
+            createAndDeleteNodes(4);
+
+            Thread.sleep(10000);
+
+            // within 'keepPeriod' - trashcan cleaner won't delete them
+            createAndDeleteNodes(8);
+
+            assertEquals(12, cleaner.getNumberOfNodesInTrashcan());
+
+            // run trashcan cleaner
+            cleaner.clean();
+            assertEquals(noOfRemainingNodes, cleaner.getNumberOfNodesInTrashcan());
+
+            logger.info("Clean up trashcan...");
+            // wait 10s so all archived nodes can be deleted
+            Thread.sleep(10000);
+            cleaner.clean();
+            assertEquals(0, cleaner.getNumberOfNodesInTrashcan());
+
+            userTransaction.commit();
+        } catch (Exception e) {
+            userTransaction.rollback();
+            throw e;
+        }
     }
 }
