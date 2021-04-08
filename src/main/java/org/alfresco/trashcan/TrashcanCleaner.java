@@ -122,15 +122,19 @@ public class TrashcanCleaner
      */
     private void deleteNodes(List<NodeRef> nodes)
     {
-        AuthenticationUtil.runAsSystem(() ->
+        for (int i = nodes.size(); i > 0; i--)
         {
-            RetryingTransactionCallback<Void> txnWork = () ->
+            NodeRef nodeRef = nodes.get(i - 1);
+            AuthenticationUtil.runAsSystem(() ->
             {
-                nodes.forEach(nodeService::deleteNode);
-                return null;
-            };
-            return transactionService.getRetryingTransactionHelper().doInTransaction(txnWork);
-        });
+                RetryingTransactionCallback<Void> txnWork = () ->
+                {
+                    nodeService.deleteNode(nodeRef);
+                    return null;
+                };
+                return transactionService.getRetryingTransactionHelper().doInTransaction(txnWork, false, true);
+            });
+        }
     }
 
     /**
@@ -236,7 +240,7 @@ public class TrashcanCleaner
             return transactionService.getRetryingTransactionHelper().doInTransaction(txnWork);
         });
 
-        delete(trashcanNodes);
+        deleteNodes(trashcanNodes);
 
         if (logger.isDebugEnabled())
         {
