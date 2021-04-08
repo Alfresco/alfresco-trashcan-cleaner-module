@@ -126,10 +126,7 @@ public class TrashcanCleaner
         {
             RetryingTransactionCallback<Void> txnWork = () ->
             {
-                for (int i = nodes.size(); i > 0; i--)
-                {
-                    nodeService.deleteNode(nodes.get(i - 1));
-                }
+                nodes.forEach(nodeService::deleteNode);
                 return null;
             };
             return transactionService.getRetryingTransactionHelper().doInTransaction(txnWork);
