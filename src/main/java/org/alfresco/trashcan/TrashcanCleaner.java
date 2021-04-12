@@ -237,7 +237,7 @@ public class TrashcanCleaner
 
                 return null;
             };
-            return transactionService.getRetryingTransactionHelper().doInTransaction(txnWork);
+            return transactionService.getRetryingTransactionHelper().doInTransaction(txnWork, true, true);
         });
 
         deleteNodes(trashcanNodes);
