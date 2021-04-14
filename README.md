@@ -26,7 +26,11 @@ The project can be built and tested by running Maven command:
 ~~~
 mvn clean install
 ~~~
-The tests require a database connection (PostgreSQL by default), see [pom.xml](pom.xml) for details.
+The tests require a database connection (PostgreSQL by default).
+
+By default, the `it-setup` maven profile raises a PostgreSQL container to be used by these tests.
+
+**Note:** If needed, run `mvn clean install -DskipITs` to skip the tests.
 
 ### Artifacts
 The artifacts can be obtained by:

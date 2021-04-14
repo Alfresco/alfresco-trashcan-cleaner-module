@@ -25,10 +25,7 @@
  */
 package org.alfresco.trashcan;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.google.common.collect.ImmutableMap;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.lock.JobLockService;
 import org.alfresco.repo.model.Repository;
@@ -54,11 +51,11 @@ import org.junit.Test;
  * @author Rui Fernandes
  *
  */
-public class TrashcanCleanerTest extends BaseSpringTest
+public class TrashcanCleanerIT extends BaseSpringTest
 {
     private static final int BATCH_SIZE = 1000;
 
-    private static final Log logger = LogFactory.getLog(TrashcanCleanerTest.class);
+    private static final Log logger = LogFactory.getLog(TrashcanCleanerIT.class);
 
     protected NodeService nodeService;
     protected TransactionService transactionService;
@@ -88,11 +85,13 @@ public class TrashcanCleanerTest extends BaseSpringTest
      * undeleted <b>remainingNodes</b>.
      *
      * @param archivedNodes Number of nodes to be created and added to trashcan
+     * @param childrenPerNode Number of children for each archived node
      * @param remainingNodes Number of nodes expected after trashcan cleanup
      * @throws Throwable
      */
-    private void cleanBatchTest(int archivedNodes, int remainingNodes) throws InterruptedException {
-        createAndDeleteNodes(archivedNodes);
+    private void cleanBatchTest(int archivedNodes, int childrenPerNode, int remainingNodes) throws InterruptedException
+    {
+        createAndDeleteNodes(archivedNodes, childrenPerNode);
 
         TrashcanCleaner cleaner = new TrashcanCleaner(nodeService, transactionService,
                 BATCH_SIZE, "PT1S"); // 1s
@@ -101,7 +100,7 @@ public class TrashcanCleanerTest extends BaseSpringTest
 
         long nodesInTrashcan = cleaner.getNumberOfNodesInTrashcan();
         logger.info(String.format("Existing nodes to delete: %s", nodesInTrashcan));
-        assertEquals(archivedNodes, nodesInTrashcan);
+        assertEquals(archivedNodes * childrenPerNode + archivedNodes, nodesInTrashcan);
 
         cleaner.clean();
 
@@ -110,6 +109,8 @@ public class TrashcanCleanerTest extends BaseSpringTest
         assertEquals(remainingNodes, nodesInTrashcan);
 
         logger.info("Clean trashcan...");
+        cleaner = new TrashcanCleaner(nodeService, transactionService,
+                remainingNodes, "PT1S");
         cleaner.clean();
         assertEquals(0, cleaner.getNumberOfNodesInTrashcan());
     }
@@ -118,17 +119,18 @@ public class TrashcanCleanerTest extends BaseSpringTest
      *
      * Creates and deletes the specified number of nodes.
      *
-     * @param n
+     * @param archivedNodes Number of nodes to be created and added to trashcan
+     * @param childrenPerNode Number of children for each archived node
      */
-    private void createAndDeleteNodes(int n)
+    private void createAndDeleteNodes(int archivedNodes, int childrenPerNode)
     {
         AuthenticationUtil.runAsSystem(() ->
         {
             RetryingTransactionHelper.RetryingTransactionCallback<Void> txnWork = () ->
             {
-                for (int i = n; i > 0; i--)
+                for (int i = 0; i < archivedNodes; i++)
                 {
-                    createAndDeleteNode();
+                    addNodeWithChildrenToTrashcan(childrenPerNode);
                 }
                 return null;
             };
@@ -138,20 +140,34 @@ public class TrashcanCleanerTest extends BaseSpringTest
 
     /**
      *
-     * Creates and delete a single node whose name is based on the current time
-     * in milliseconds.
+     * Creates and deletes an hierarchy of nodes - one parent whose name is based on the current time
+     * in milliseconds, with given number of children.
+     *
+     * @param children Number of children for the archived node
      *
      */
-    private void createAndDeleteNode()
+    private void addNodeWithChildrenToTrashcan(int children)
     {
         NodeRef companyHome = repository.getCompanyHome();
         String name = "Sample (" + System.currentTimeMillis() + ")";
-        Map<QName, Serializable> contentProps = new HashMap<QName, Serializable>();
-        contentProps.put(ContentModel.PROP_NAME, name);
         ChildAssociationRef association = nodeService.createNode(companyHome, ContentModel.ASSOC_CONTAINS,
                 QName.createQName(NamespaceService.CONTENT_MODEL_PREFIX, name), ContentModel.TYPE_CONTENT,
-                contentProps);
-        nodeService.deleteNode(association.getChildRef());
+                ImmutableMap.of(ContentModel.PROP_NAME, name));
+
+        //create children for association.getChildRef() node
+        NodeRef parent = association.getChildRef();
+        for (int i = 0; i < children; i++)
+        {
+            name = "child (" + i + ")";
+            ChildAssociationRef child = nodeService.createNode(parent, ContentModel.ASSOC_CONTAINS,
+                    QName.createQName(NamespaceService.CONTENT_MODEL_PREFIX, name),
+                    ContentModel.TYPE_CONTENT, ImmutableMap.of(ContentModel.PROP_NAME, name));
+            // archive child
+            nodeService.deleteNode(child.getChildRef());
+        }
+
+        // archive node
+        nodeService.deleteNode(parent);
     }
 
     /**
@@ -161,8 +177,9 @@ public class TrashcanCleanerTest extends BaseSpringTest
      *
      */
     @Test
-    public void testCleanSimple() throws InterruptedException {
-        cleanBatchTest(1, 0);
+    public void testCleanSimple() throws InterruptedException
+    {
+        cleanBatchTest(1, 0, 0);
     }
 
     /**
@@ -172,35 +189,39 @@ public class TrashcanCleanerTest extends BaseSpringTest
      *
      */
     @Test
-    public void testCleanBatch() throws InterruptedException {
-        cleanBatchTest(BATCH_SIZE + 1, 1);
+    public void testCleanBatch() throws InterruptedException
+    {
+        cleanBatchTest(BATCH_SIZE + 1, 0, 1);
     }
 
     @Test
-    public void testKeepPeriodInTrashcanCleaner() throws InterruptedException {
-        final int deleteBatchCount = 10;
-        final long noOfRemainingNodes = 8;
+    public void testCleanNodesOlderThanKeepPeriod() throws InterruptedException
+    {
+        final int deleteBatchCount = 15;
+        final int noOfRemainingNodes = 16;
 
-        // archived nodes older than 'keepPeriod' - will be deleted by the trashcan cleaner
-        createAndDeleteNodes(4);
+        // archived nodes older than 'keepPeriod' (less than deleteBatchCount) - will be deleted by the trashcan cleaner
+        createAndDeleteNodes(4, 2); // total of 12 archived nodes
 
         Thread.sleep(10000);
 
         // within 'keepPeriod' - trashcan cleaner won't delete them
-        createAndDeleteNodes(8);
+        createAndDeleteNodes(8, 1); // total of 16 archived nodes
 
         TrashcanCleaner cleaner = new TrashcanCleaner(nodeService, transactionService,
                 deleteBatchCount, "PT10S"); // 10s
 
-        assertEquals(12, cleaner.getNumberOfNodesInTrashcan());
+        assertEquals(28, cleaner.getNumberOfNodesInTrashcan());
 
         // run trashcan cleaner
         cleaner.clean();
         assertEquals(noOfRemainingNodes, cleaner.getNumberOfNodesInTrashcan());
 
         logger.info("Clean up trashcan...");
-        // wait 10s so all archived nodes can be deleted
-        Thread.sleep(10000);
+        // wait 2s so all archived nodes can be deleted
+        Thread.sleep(2000);
+        cleaner = new TrashcanCleaner(nodeService, transactionService,
+                BATCH_SIZE, "PT1S"); // 1s
         cleaner.clean();
         assertEquals(0, cleaner.getNumberOfNodesInTrashcan());
     }
