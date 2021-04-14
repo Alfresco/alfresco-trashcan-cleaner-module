@@ -122,9 +122,8 @@ public class TrashcanCleaner
      */
     private void deleteNodes(List<NodeRef> nodes)
     {
-        for (int i = nodes.size(); i > 0; i--)
+        for (NodeRef nodeRef : nodes)
         {
-            NodeRef nodeRef = nodes.get(i - 1);
             AuthenticationUtil.runAsSystem(() ->
             {
                 RetryingTransactionCallback<Void> txnWork = () ->

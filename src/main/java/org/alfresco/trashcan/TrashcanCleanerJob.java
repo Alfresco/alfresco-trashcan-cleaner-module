@@ -31,15 +31,15 @@ import org.quartz.JobExecutionContext;
 /**
  * 
  * This class is the job responsible for cleaning the trashcan periodically
- * according to <b>trashcan.deleteBatchCount</b> and <b>trashcan.daysToKeep</b>
+ * according to <b>trashcan-cleaner.deleteBatchCount</b> and <b>trashcan-cleaner.keepPeriod</b>
  * set. It's a {@link org.springframework.scheduling.quartz.QuartzJobBean
  * QuartzJobBean} implemented through extension of the
  * {@link org.alfresco.schedule.AbstractScheduledLockedJob
  * AbstractScheduledLockedJob}.
  * 
- * <b>trashcan.deleteBatchCount</b>: It will set how many nodes in trashcan to
+ * <b>trashcan-cleaner.deleteBatchCount</b>: It will set how many nodes in trashcan to
  * delete at maximum during <b>clean</b> execution. By default the value is
- * 1000. <b>trashcan.daysToKeep</b>: The number of days to keep a document in
+ * 1000. <b>trashcan-cleaner.keepPeriod</b>: The number of days to keep a document in
  * trashcan since its deletion. Any node archived less than the value specified
  * won't be deleted during <b>clean</b> execution. If the value is 0 or negative
  * any archived will be eligible for deletion (default behavior if no positive
