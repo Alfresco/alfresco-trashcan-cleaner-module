@@ -45,8 +45,6 @@ import org.alfresco.service.transaction.TransactionService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import static org.apache.commons.collections4.ListUtils.partition;
-
 /**
  *
  * This class is capable of cleaning the trashcan without depending on searches
@@ -67,13 +65,11 @@ public class TrashcanCleaner
 {
     private static final Log logger = LogFactory.getLog(TrashcanCleaner.class);
 
-    private static final int batchSize = 100;
-
     private final NodeService nodeService;
     private final TransactionService transactionService;
 
     private final String archiveStoreUrl = "archive://SpacesStore";
-    private final int deleteBatchCount; // total nodes to delete
+    private final int deleteBatchCount;
     private final Duration keepPeriod;
     private List<NodeRef> trashcanNodes;
 
@@ -91,25 +87,6 @@ public class TrashcanCleaner
         this.transactionService = transactionService;
         this.deleteBatchCount = deleteBatchCount;
         this.keepPeriod = Duration.parse(keepPeriod);
-    }
-
-    /**
-     *
-     * It splits and deletes the {@link java.util.List} of
-     * {@link org.alfresco.service.cmr.repository.NodeRef}s received as
-     * argument in batches of {@link #batchSize}.
-     *
-     * @param nodes
-     */
-    private void delete(List<NodeRef> nodes)
-    {
-        if (deleteBatchCount <= batchSize)
-        {
-            deleteNodes(nodes);
-            return;
-        }
-
-        partition(nodes, batchSize).forEach(this::deleteNodes);
     }
 
     /**
