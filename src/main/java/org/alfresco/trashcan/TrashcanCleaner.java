@@ -101,6 +101,8 @@ public class TrashcanCleaner
     {
         for (NodeRef nodeRef : nodes)
         {
+            // create a new transaction for each deletion so the transactions are smaller and the progress of the
+            // cleaner is not lost in case of any problems encountered during the job execution
             AuthenticationUtil.runAsSystem(() ->
             {
                 RetryingTransactionCallback<Void> txnWork = () ->
@@ -145,6 +147,10 @@ public class TrashcanCleaner
         StoreRef archiveStore = new StoreRef(archiveStoreUrl);
         NodeRef archiveRoot = nodeService.getRootNode(archiveStore);
 
+        // ContentModel.ASSOC_CHILDREN type is an ordered association and the newly deleted nodes are added at the end
+        // of the trashcan nodes list.
+        // Since this method returns the nodes in the correct order, we will always get the deleteBatchCount nodes
+        // in the trashcan that are in there for the longest time.
         return nodeService.getChildAssocs(
                 archiveRoot, ContentModel.ASSOC_CHILDREN, RegexQNamePattern.MATCH_ALL, deleteBatchCount, false);
     }
@@ -200,6 +206,7 @@ public class TrashcanCleaner
             logger.debug("Running TrashcanCleaner");
         }
 
+        // Retrieve in a new read-only transaction the list of nodes to be deleted by the Trashcan Cleaner
         AuthenticationUtil.runAsSystem(() ->
         {
             RetryingTransactionCallback<Void> txnWork = () ->
