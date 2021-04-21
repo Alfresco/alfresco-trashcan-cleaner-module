@@ -7,9 +7,10 @@ git checkout -B "${TRAVIS_BRANCH}"
 git config user.email "${GIT_EMAIL}"
 
 mvn -B \
-    -Darguments=-DskipTests \
-    -Darguments="-Dmaven.javadoc.skip=true" \
+    -DskipTests \
+    -Darguments="-DskipTests -Dmaven.javadoc.skip=true" \
     -DscmCommentPrefix="[maven-release-plugin][skip ci] " \
     -Dusername="${GIT_USERNAME}" \
     -Dpassword="${GIT_PASSWORD}" \
     release:clean release:prepare release:perform
+    
