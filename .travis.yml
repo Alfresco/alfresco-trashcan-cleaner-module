@@ -35,7 +35,7 @@ jobs:
   include:
     - name: "Tests"
       stage: tests
-      script: mvn -B -U -q install -Ddb.driver=org.postgresql.Driver -Ddb.name=alfresco -Ddb.url=jdbc:postgresql:alfresco -Ddb.username=alfresco -Ddb.password=alfresco
+      script: mvn -B -U install -Ddb.driver=org.postgresql.Driver -Ddb.name=alfresco -Ddb.url=jdbc:postgresql:alfresco -Ddb.username=alfresco -Ddb.password=alfresco
     
     - name: "Release"
       stage: release
