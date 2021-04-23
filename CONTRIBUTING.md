@@ -5,6 +5,11 @@ The following is a set of guidelines for contributing to this library. Most of t
 
 Please, take a look at the contribution information in the [Community Site](https://community.alfresco.com/docs/DOC-6385-project-overview-repository)
 
+## Build and release process
+
+For a complete walk-through check out the
+[build-and-release-101.MD](documentation/build-and-release-101.md) under the `documentation` folder.
+
 #### Reporting bugs
 The bug can be submitted as an issue on GitHub. But the best way to report a bug is to create an issue in [JIRA tracker](https://issues.alfresco.com). Ideally supported by a good pull request.
 
