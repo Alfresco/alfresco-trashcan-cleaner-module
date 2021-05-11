@@ -31,6 +31,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.alfresco.model.ContentModel;
@@ -96,9 +97,12 @@ public class TrashcanCleaner
      * argument.
      *
      * @param nodes
+     *
+     * return The number of deleted nodes
      */
-    private void deleteNodes(List<NodeRef> nodes)
+    private int deleteNodes(List<NodeRef> nodes)
     {
+        AtomicInteger deletedNodes = new AtomicInteger();
         for (NodeRef nodeRef : nodes)
         {
             // create a new transaction for each deletion so the transactions are smaller and the progress of the
@@ -108,11 +112,13 @@ public class TrashcanCleaner
                 RetryingTransactionCallback<Void> txnWork = () ->
                 {
                     nodeService.deleteNode(nodeRef);
+                    deletedNodes.getAndIncrement();
                     return null;
                 };
                 return transactionService.getRetryingTransactionHelper().doInTransaction(txnWork, false, true);
             });
         }
+        return deletedNodes.get();
     }
 
     /**
@@ -223,10 +229,11 @@ public class TrashcanCleaner
             return transactionService.getRetryingTransactionHelper().doInTransaction(txnWork, true, true);
         });
 
-        deleteNodes(trashcanNodes);
+        int deletedNodes = deleteNodes(trashcanNodes);
 
         if (logger.isDebugEnabled())
         {
+            logger.debug(String.format("Number of deleted nodes: %s", deletedNodes));
             logger.debug("TrashcanCleaner finished");
         }
     }
