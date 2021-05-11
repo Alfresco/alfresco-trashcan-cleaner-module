@@ -207,10 +207,7 @@ public class TrashcanCleaner
      */
     public void clean()
     {
-        if (logger.isDebugEnabled())
-        {
-            logger.debug("Running TrashcanCleaner");
-        }
+        logger.info("Running TrashcanCleaner");
 
         // Retrieve in a new read-only transaction the list of nodes to be deleted by the Trashcan Cleaner
         AuthenticationUtil.runAsSystem(() ->
@@ -219,10 +216,7 @@ public class TrashcanCleaner
             {
                 trashcanNodes = getBatchToDelete();
 
-                if (logger.isDebugEnabled())
-                {
-                    logger.debug(String.format("Number of nodes to delete: %s", trashcanNodes.size()));
-                }
+                logger.info(String.format("Number of nodes to delete: %s", trashcanNodes.size()));
 
                 return null;
             };
@@ -231,10 +225,7 @@ public class TrashcanCleaner
 
         int deletedNodes = deleteNodes(trashcanNodes);
 
-        if (logger.isDebugEnabled())
-        {
-            logger.debug(String.format("Number of deleted nodes: %s", deletedNodes));
-            logger.debug("TrashcanCleaner finished");
-        }
+        logger.info(String.format("Number of deleted nodes: %s", deletedNodes));
+        logger.info("TrashcanCleaner finished");
     }
 }
