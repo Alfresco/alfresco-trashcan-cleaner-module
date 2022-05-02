@@ -23,8 +23,8 @@
     <properties>
         <alfresco.data.location>alf_data</alfresco.data.location>
 
-        <dependency.spring.test.version>2.4.4</dependency.spring.test.version>
-        <dependency.alfresco-repository.version>11.2</dependency.alfresco-repository.version>
+        <dependency.spring.test.version>2.5.12</dependency.spring.test.version>
+        <dependency.alfresco-repository.version>13.4</dependency.alfresco-repository.version>
     </properties>
 
     <dependencies>
