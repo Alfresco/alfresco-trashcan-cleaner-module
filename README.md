@@ -19,7 +19,8 @@ In the above configuration the scheduled process will clean all deleted items ol
 To enable debug logging:
 
 ~~~
-log4j.logger.org.alfresco.trashcan=debug
+logger.org-alfresco-trashcan.name=org.alfresco.trashcan
+logger.org-alfresco-trashcan.level=debug
 ~~~
 ### Building and testing
 The project can be built and tested by running Maven command:
