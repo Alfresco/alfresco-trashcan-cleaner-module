@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: Alfresco/alfresco-build-tools/.github/actions/get-commit-message@v1.34.2
       - name: "Store commit message as job output"
         id: get_commit_message
