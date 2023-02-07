@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: Alfresco/alfresco-build-tools/.github/actions/get-commit-message@v1.34.2
+      - uses: Alfresco/alfresco-build-tools/.github/actions/get-commit-message@fix/ACS-4500_fix-skip-tests
       - name: "Store commit message as job output"
         id: get_commit_message
         run: |
