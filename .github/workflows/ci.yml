@@ -14,13 +14,27 @@ on:
   workflow_dispatch:
 
 jobs:
+  get_commit_message:
+    name: "Get commit message"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Alfresco/alfresco-build-tools/.github/actions/get-commit-message@v1.34.2
+      - name: "Store commit message as job output"
+        id: get_commit_message
+        run: |
+          echo "commit_message=${COMMIT_MESSAGE}" >> $GITHUB_OUTPUT
+    outputs:
+      commit_message: ${{ steps.get_commit_message.commit_message }}
+
   build_and_release:
+      needs: get_commit_message
       name: "Build and Release"
-      uses: Alfresco/alfresco-build-tools/.github/workflows/build-and-release-maven.yml@fix/ACS-4500_fix-skip-tests
+      uses: Alfresco/alfresco-build-tools/.github/workflows/build-and-release-maven.yml@v1.34.2
       secrets: inherit
       with:
         auto-release: false
-        skip-tests: ${{ contains(github.event.head_commit.message, '[skip tests]') }}
+        skip-tests: ${{ contains(needs.get_commit_message.outputs.commit_message, '[skip tests]') }}
         build-args: "-U -Ddb.driver=org.postgresql.Driver -Ddb.name=alfresco -Ddb.url=jdbc:postgresql:alfresco -Ddb.username=alfresco -Ddb.password=alfresco"
         release-args: "-Dmaven.javadoc.skip=true"
         release-branches: "^master$|^support/.+$|^release/.+$"
