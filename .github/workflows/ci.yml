@@ -36,7 +36,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: "Print output from get_commit_message"
-        run: echo ${{ needs.get_commit_message.outputs.commit_message }}
+        run: |
+          echo ${{ needs.get_commit_message.outputs.commit_message }}
+          echo ${{ contains(needs.get_commit_message.outputs.commit_message, '[skip tests]') }}
 
   build_and_release:
       needs: get_commit_message
