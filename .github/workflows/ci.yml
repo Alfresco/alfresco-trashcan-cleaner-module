@@ -45,7 +45,7 @@ jobs:
       secrets: inherit
       with:
         auto-release: false
-        skip-tests: ${{ contains(needs.get_commit_message.outputs.commit_message, '[skip tests]') == 'true' }}
+        skip-tests: ${{ contains(needs.get_commit_message.outputs.commit_message, '[skip tests]') }}
         build-args: "-U -Ddb.driver=org.postgresql.Driver -Ddb.name=alfresco -Ddb.url=jdbc:postgresql:alfresco -Ddb.username=alfresco -Ddb.password=alfresco"
         release-args: "-Dmaven.javadoc.skip=true"
         release-branches: "^master$|^support/.+$|^release/.+$"
