@@ -21,13 +21,13 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: Alfresco/alfresco-build-tools/.github/actions/get-commit-message@fix/ACS-4500_fix-skip-tests
-      - name: "Store commit message as job output"
-        id: get_commit_message
+      - uses: Alfresco/alfresco-build-tools/.github/actions/get-commit-message@v1.34.2
+      - name: "Store last commit message as job output"
+        id: last_commit
         run: |
           echo "commit_message=${COMMIT_MESSAGE}" >> $GITHUB_OUTPUT
     outputs:
-      commit_message: ${{ steps.get_commit_message.commit_message }}
+      commit_message: ${{ steps.last_commit.outputs.commit_message }}
 
   debug_job:
     name: "Debug Job"
