@@ -1,6 +1,6 @@
 # Build
-The `alfresco-trashcan-cleaner-module` project uses _Travis CI_. \
-The `.travis.yml` config file can be found in the root of the repository.
+The `alfresco-trashcan-cleaner-module` project uses _GitHub CI_. \
+The `ci.yml` config file can be found in [.github/workflows](../.github\workflows\ci.yml).
 
 
 ## Stages and Jobs
@@ -8,7 +8,7 @@ The `.travis.yml` config file can be found in the root of the repository.
 2. **Release**: Release and Deployment by publishing to Nexus.
 
 ## Branches
-Travis CI builds differ by branch:
+GitHub CI builds differ by branch:
 * `master` / `support/*` / `release/*` branches:
   - regular builds which include the _Tests_ stage (unless the commit message contains the
    `[skip tests]` tag);
