@@ -21,9 +21,12 @@
     </scm>
 
     <properties>
-        <maven.build.sourceVersion>11</maven.build.sourceVersion>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <java.version>17</java.version>
+        <maven.build.sourceVersion>${java.version}</maven.build.sourceVersion>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <maven.compiler.release>${java.version}</maven.compiler.release>
+
         <alfresco.data.location>alf_data</alfresco.data.location>
 
         <dependency.spring.test.version>2.5.12</dependency.spring.test.version>
