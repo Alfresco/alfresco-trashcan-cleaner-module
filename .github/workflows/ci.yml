@@ -18,10 +18,10 @@ jobs:
     name: "Get last commit message"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: Alfresco/alfresco-build-tools/.github/actions/get-commit-message@v1.35.1
+      - uses: Alfresco/alfresco-build-tools/.github/actions/get-commit-message@v7.0.0
       - name: "Store last commit message as job output"
         id: last_commit
         run: echo "commit_message=${COMMIT_MESSAGE}" >> $GITHUB_OUTPUT
@@ -31,7 +31,7 @@ jobs:
   build_and_release:
     needs: get_commit_message
     name: "Build and Release"
-    uses: Alfresco/alfresco-build-tools/.github/workflows/build-and-release-maven.yml@v1.35.1
+    uses: Alfresco/alfresco-build-tools/.github/workflows/build-and-release-maven.yml@v7.0.0
     secrets: inherit
     with:
       auto-release: false
