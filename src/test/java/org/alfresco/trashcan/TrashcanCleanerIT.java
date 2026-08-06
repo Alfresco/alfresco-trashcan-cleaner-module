@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableMap;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.lock.JobLockService;
 import org.alfresco.repo.model.Repository;
+import org.alfresco.repo.node.archive.NodeArchiveService;
 import org.alfresco.repo.security.authentication.AuthenticationComponent;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
@@ -62,6 +63,7 @@ public class TrashcanCleanerIT extends BaseSpringTest
     protected Repository repository;
     protected JobLockService jobLockService;
     protected AuthenticationComponent authenticationComponent;
+    protected NodeArchiveService nodeArchiveService;
 
     /**
      *
@@ -76,6 +78,7 @@ public class TrashcanCleanerIT extends BaseSpringTest
         transactionService = (TransactionService) applicationContext.getBean("transactionComponent");
         jobLockService = (JobLockService) applicationContext.getBean("jobLockService");
         repository = (Repository) applicationContext.getBean("repositoryHelper");
+        nodeArchiveService = (NodeArchiveService) applicationContext.getBean("nodeArchiveService");
     }
 
     /**
@@ -94,7 +97,7 @@ public class TrashcanCleanerIT extends BaseSpringTest
         createAndDeleteNodes(archivedNodes, childrenPerNode);
 
         TrashcanCleaner cleaner = new TrashcanCleaner(nodeService, transactionService,
-                BATCH_SIZE, "PT1S"); // 1s
+                BATCH_SIZE, "PT1S", nodeArchiveService); // 1s
 
         Thread.sleep(1500);
 
@@ -110,7 +113,7 @@ public class TrashcanCleanerIT extends BaseSpringTest
 
         logger.info("Clean trashcan...");
         cleaner = new TrashcanCleaner(nodeService, transactionService,
-                remainingNodes, "PT1S");
+                remainingNodes, "PT1S", nodeArchiveService);
         cleaner.clean();
         assertEquals(0, cleaner.getNumberOfNodesInTrashcan());
     }
@@ -209,7 +212,7 @@ public class TrashcanCleanerIT extends BaseSpringTest
         createAndDeleteNodes(8, 1); // total of 16 archived nodes
 
         TrashcanCleaner cleaner = new TrashcanCleaner(nodeService, transactionService,
-                deleteBatchCount, "PT10S"); // 10s
+                deleteBatchCount, "PT10S", nodeArchiveService); // 10s
 
         assertEquals(28, cleaner.getNumberOfNodesInTrashcan());
 
@@ -221,7 +224,7 @@ public class TrashcanCleanerIT extends BaseSpringTest
         // wait 2s so all archived nodes can be deleted
         Thread.sleep(2000);
         cleaner = new TrashcanCleaner(nodeService, transactionService,
-                BATCH_SIZE, "PT1S"); // 1s
+                BATCH_SIZE, "PT1S", nodeArchiveService); // 1s
         cleaner.clean();
         assertEquals(0, cleaner.getNumberOfNodesInTrashcan());
     }
