@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.node.archive.NodeArchiveService;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -73,6 +74,7 @@ public class TrashcanCleaner
     private final int deleteBatchCount;
     private final Duration keepPeriod;
     private List<NodeRef> trashcanNodes;
+    private NodeArchiveService nodeArchiveService;
 
     /**
      *
@@ -82,12 +84,13 @@ public class TrashcanCleaner
      * @param keepPeriod
      */
     public TrashcanCleaner(NodeService nodeService, TransactionService transactionService,
-            int deleteBatchCount, String keepPeriod)
+            int deleteBatchCount, String keepPeriod, NodeArchiveService nodeArchiveService)
     {
         this.nodeService = nodeService;
         this.transactionService = transactionService;
         this.deleteBatchCount = deleteBatchCount;
         this.keepPeriod = Duration.parse(keepPeriod);
+        this.nodeArchiveService = nodeArchiveService;
     }
 
     /**
@@ -111,7 +114,7 @@ public class TrashcanCleaner
             {
                 RetryingTransactionCallback<Void> txnWork = () ->
                 {
-                    nodeService.deleteNode(nodeRef);
+                    nodeArchiveService.purgeArchivedNode(nodeRef);
                     deletedNodes.getAndIncrement();
                     return null;
                 };

@@ -29,12 +29,17 @@ import com.google.common.collect.ImmutableMap;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.lock.JobLockService;
 import org.alfresco.repo.model.Repository;
+import org.alfresco.repo.node.archive.NodeArchiveService;
 import org.alfresco.repo.security.authentication.AuthenticationComponent;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.security.AuthorityService;
+import org.alfresco.service.cmr.site.SiteInfo;
+import org.alfresco.service.cmr.site.SiteService;
+import org.alfresco.service.cmr.site.SiteVisibility;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
@@ -62,6 +67,9 @@ public class TrashcanCleanerIT extends BaseSpringTest
     protected Repository repository;
     protected JobLockService jobLockService;
     protected AuthenticationComponent authenticationComponent;
+    protected NodeArchiveService nodeArchiveService;
+    protected AuthorityService authorityService;
+    protected SiteService siteService;
 
     /**
      *
@@ -76,6 +84,9 @@ public class TrashcanCleanerIT extends BaseSpringTest
         transactionService = (TransactionService) applicationContext.getBean("transactionComponent");
         jobLockService = (JobLockService) applicationContext.getBean("jobLockService");
         repository = (Repository) applicationContext.getBean("repositoryHelper");
+        nodeArchiveService = (NodeArchiveService) applicationContext.getBean("nodeArchiveService");
+        authorityService = (AuthorityService) applicationContext.getBean("authorityService");
+        siteService = (SiteService) applicationContext.getBean("siteService");
     }
 
     /**
@@ -94,7 +105,7 @@ public class TrashcanCleanerIT extends BaseSpringTest
         createAndDeleteNodes(archivedNodes, childrenPerNode);
 
         TrashcanCleaner cleaner = new TrashcanCleaner(nodeService, transactionService,
-                BATCH_SIZE, "PT1S"); // 1s
+                BATCH_SIZE, "PT1S", nodeArchiveService); // 1s
 
         Thread.sleep(1500);
 
@@ -110,7 +121,7 @@ public class TrashcanCleanerIT extends BaseSpringTest
 
         logger.info("Clean trashcan...");
         cleaner = new TrashcanCleaner(nodeService, transactionService,
-                remainingNodes, "PT1S");
+                remainingNodes, "PT1S", nodeArchiveService);
         cleaner.clean();
         assertEquals(0, cleaner.getNumberOfNodesInTrashcan());
     }
@@ -209,7 +220,7 @@ public class TrashcanCleanerIT extends BaseSpringTest
         createAndDeleteNodes(8, 1); // total of 16 archived nodes
 
         TrashcanCleaner cleaner = new TrashcanCleaner(nodeService, transactionService,
-                deleteBatchCount, "PT10S"); // 10s
+                deleteBatchCount, "PT10S", nodeArchiveService); // 10s
 
         assertEquals(28, cleaner.getNumberOfNodesInTrashcan());
 
@@ -221,8 +232,49 @@ public class TrashcanCleanerIT extends BaseSpringTest
         // wait 2s so all archived nodes can be deleted
         Thread.sleep(2000);
         cleaner = new TrashcanCleaner(nodeService, transactionService,
-                BATCH_SIZE, "PT1S"); // 1s
+                BATCH_SIZE, "PT1S", nodeArchiveService); // 1s
         cleaner.clean();
         assertEquals(0, cleaner.getNumberOfNodesInTrashcan());
+    }
+
+    @Test
+    public void testPurgeArchivedSiteRemovesSiteAuthorityAndAllowsRecreation() throws InterruptedException
+    {
+        final String shortName = "repro-site-" + System.currentTimeMillis();
+        final String title = "Repro Site";
+        final String description = "Repro site for trashcan purge regression test";
+        final String siteAuthority = "GROUP_site_" + shortName;
+
+        runAsAdminInWritableTransaction(() -> {
+            SiteInfo siteInfo = siteService.createSite("site-dashboard", shortName, title, description, SiteVisibility.PUBLIC);
+            assertNotNull(siteInfo);
+            assertTrue(authorityService.authorityExists(siteAuthority));
+
+            siteService.deleteSite(shortName);
+            assertTrue(authorityService.authorityExists(siteAuthority));
+            return null;
+        });
+
+        Thread.sleep(1500);
+
+        TrashcanCleaner cleaner = new TrashcanCleaner(nodeService, transactionService,
+                BATCH_SIZE, "PT1S", nodeArchiveService);
+        cleaner.clean();
+
+        runAsAdminInWritableTransaction(() -> {
+            assertFalse(authorityService.authorityExists(siteAuthority));
+
+            SiteInfo recreatedSite = siteService.createSite("site-dashboard", shortName, title, description, SiteVisibility.PUBLIC);
+            assertNotNull(recreatedSite);
+            assertTrue(authorityService.authorityExists(siteAuthority));
+            return null;
+        });
+    }
+
+    private <T> void runAsAdminInWritableTransaction(RetryingTransactionHelper.RetryingTransactionCallback<T> txnWork)
+    {
+        AuthenticationUtil.runAs(
+                () -> transactionService.getRetryingTransactionHelper().doInTransaction(txnWork, false, true),
+                AuthenticationUtil.getAdminUserName());
     }
 }

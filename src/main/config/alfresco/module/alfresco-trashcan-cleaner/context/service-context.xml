@@ -9,6 +9,7 @@
         <constructor-arg ref="transactionService" />
         <constructor-arg value="${trashcan-cleaner.deleteBatchCount}" />
         <constructor-arg value="${trashcan-cleaner.keepPeriod}" />
+        <constructor-arg ref="nodeArchiveService" />
     </bean>
 
     <bean id="trashcanSchedulerAccessor" class="org.springframework.scheduling.quartz.SchedulerAccessorBean">
